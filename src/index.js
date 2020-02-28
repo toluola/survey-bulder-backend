@@ -1,17 +1,18 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import dotenv from "dotenv";
+import userRoute from "./routers/users";
+import "./db/db";
 
-dotenv.config();
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
+
+app.use("/api/v1", userRoute);
 
 app.listen(PORT, () => console.log(`Running on localhost:${PORT}`));
 
