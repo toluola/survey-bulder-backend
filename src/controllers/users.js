@@ -2,33 +2,43 @@ import User from "../models/User";
 
 const createUser = async (req, res) => {
   try {
-    const user = new User(req.body);
-    await user.save();
-    const token = await user.generateAuthToken();
-    res.status(201).send({ user, token });
-  } catch (error) {
-    res.status(400).send(error);
+    const { email, password, name } = req.body;
+    const createUser = new User({ email, password, name });
+    await createUser.save();
+    const token = await createUser.generateAuthToken();
+    res.status(201).json({ token });
+  } catch (err) {
+    if (err.keyPattern.email) {
+      res.status(400).json({
+        message: `The Email ${err.keyValue.email} already Exist`
+      });
+    } else {
+      res.status(400).json({ message: "Server Error. Please Try Again" });
+    }
   }
 };
 
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findByCredentials(email, password);
+    const user = await User.findUser(email);
     if (!user) {
-      return res
-        .status(401)
-        .send({ error: "Login failed! Check authentication credentials" });
+      return res.status(401).json({ message: "User does not exist" });
     }
+    const isMatch = await User.comparePassword(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({
+        message: "Incorrect Password!"
+      });
     const token = await user.generateAuthToken();
-    res.send({ user, token });
+    res.json({ token });
   } catch (error) {
-    res.status(400).send(error);
+    res.status(400).json({ message: "Server Error. Please try again later" });
   }
 };
 
 const viewUser = (req, res) => {
-  res.send(req.user);
+  res.status(200).json(req.user);
 };
 
 const logoutUser = async (req, res) => {
